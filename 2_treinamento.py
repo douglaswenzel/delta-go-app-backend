@@ -39,7 +39,7 @@ def treinamento():
 
     recognizer = cv2.face.LBPHFaceRecognizer_create()
     recognizer.train(np.array(faces_treinadas), np.array(ids_usuarios))
-    recognizer.save('../modelo_lbph.yml')
+    recognizer.save('modelo_lbph.yml')
     np.save('ids_usuarios.npy', ids_usuarios)
     print("Treinamento concluído e modelo LBPH salvo.")
 
