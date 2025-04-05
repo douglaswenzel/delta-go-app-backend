@@ -5,7 +5,7 @@ def controle_acesso():
 
     face_cascade = cv2.CascadeClassifier('Cascade/haarcascade_frontalface_default.xml')
     recognizer = cv2.face.LBPHFaceRecognizer_create()
-    recognizer.read('../modelo_lbph.yml')
+    recognizer.read('modelo_lbph.yml')
     ids_usuarios = np.load('ids_usuarios.npy')
 
     cap = cv2.VideoCapture(2)

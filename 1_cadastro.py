@@ -40,4 +40,4 @@ def cadastrar_usuario(user_id):
     cv2.destroyAllWindows()
     print("Cadastro concluído!")
 
-cadastrar_usuario(4)
+cadastrar_usuario(1)
