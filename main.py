@@ -64,7 +64,6 @@ class DatabaseManager:
             cursor.execute(user_query, user_values)
             user_id = cursor.lastrowid
 
-            # Inserir dados específicos do tipo
             if user_data['tipo'] == 'funcionario':
                 funcionario_query = """
                 INSERT INTO funcionario (user_id, cargo, setor, data_admissao)
@@ -108,6 +107,26 @@ class DatabaseManager:
         except Error as e:
             self.connection.rollback()
             logging.error(f"Erro ao cadastrar usuário: {e}")
+            raise
+        finally:
+            cursor.close()
+
+    def register_photos(self, user_id, photo_paths):
+        try:
+            cursor = self.connection.cursor()
+            photo_query = """
+            INSERT INTO fotos_usuarios (usuario_id, caminho_foto)
+            VALUES (%s, %s)
+            """
+
+            for path in photo_paths:
+                cursor.execute(photo_query, (user_id, path))
+
+            self.connection.commit()
+            logging.info(f"Fotos do usuário {user_id} registradas com sucesso")
+        except Error as e:
+            self.connection.rollback()
+            logging.error(f"Erro ao registrar fotos: {e}")
             raise
         finally:
             cursor.close()
