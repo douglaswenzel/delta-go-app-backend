@@ -4,7 +4,13 @@ import numpy as np
 def controle_acesso():
 
     face_cascade = cv2.CascadeClassifier('Cascade/haarcascade_frontalface_default.xml')
-    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    recognizer = cv2.face.LBPHFaceRecognizer_create(
+        radius=2,          # Aumentar área de análise
+        neighbors=16,      # Mais padrões locais
+        grid_x=8,          # Mais células horizontais
+        grid_y=8,          # Mais células verticais
+        threshold=85       # Ajuste fino de confiança
+    )
     recognizer.read('modelo_lbph.yml')
     ids_usuarios = np.load('ids_usuarios.npy')
 
