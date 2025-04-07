@@ -107,6 +107,49 @@ class DatabaseManager:
                 cursor.close()
             if self.connection and self.connection.is_connected():
                 self.connection.close()
+
+    def _register_employee(self, cursor, user_id, employee_data):
+        """Registra dados específicos de funcionário"""
+        query = """
+        INSERT INTO funcionario (
+            user_id, cargo, setor, data_admissao
+        ) VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(query, (
+            user_id,
+            employee_data['cargo'],
+            employee_data['setor'],
+            employee_data['data_admissao']
+        ))
+
+    def _register_student(self, cursor, user_id, student_data):
+        """Registra dados específicos de aluno"""
+        query = """
+        INSERT INTO aluno (
+            usuario_id, matricula, curso, turma
+        ) VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(query, (
+            user_id,
+            student_data['matricula'],
+            student_data['curso'],
+            student_data['turma']
+        ))
+
+    def _register_visitor(self, cursor, user_id, visitor_data):
+        """Registra dados específicos de visitante"""
+        query = """
+        INSERT INTO visitante (
+            usuario_id, motivo_visita, visitado, data_visita
+        ) VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(query, (
+            user_id,
+            visitor_data['motivo_visita'],
+            visitor_data['visitado'],
+            visitor_data['data_visita']
+        ))
+
     def register_photos(self, user_id, photo_paths):
         try:
             cursor = self.connection.cursor()
