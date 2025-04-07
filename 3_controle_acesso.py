@@ -1,4 +1,5 @@
 import cv2
+import os
 import numpy as np
 
 def controle_acesso():
@@ -35,7 +36,7 @@ def controle_acesso():
             user_id, confidence = recognizer.predict(face_roi_equalized)
 
 
-            if confidence < 90:
+            if confidence < 95:
                 color = (0, 255, 0)
                 label = f"ID: {user_id} (Conf: {confidence:.2f})"
             else:
