@@ -20,7 +20,7 @@ class DatabaseManager:
                 host='162.241.2.230',
                 database='dougl947_DeltaGo',
                 user='dougl947_user',
-                password=''
+                password='a#=d,F*No6)D'
             )
             logging.info("Conexão com o MySQL estabelecida com sucesso")
         except Error as e:
