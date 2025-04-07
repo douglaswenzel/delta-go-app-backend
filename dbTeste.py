@@ -164,7 +164,7 @@ if __name__ == "__main__":
         host='162.241.2.230',
         database='dougl947_DeltaGo',
         user='dougl947_user2',
-        password='a#=d,F*No6)'
+        password='a#=d,F*No6)D'
     )
 
     exibir_resultado_teste(teste)

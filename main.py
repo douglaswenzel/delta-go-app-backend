@@ -19,7 +19,7 @@ class DatabaseManager:
             self.connection = mysql.connector.connect(
                 host='162.241.2.230',
                 database='dougl947_DeltaGo',
-                user='dougl947_user',
+                user='dougl947_user2',
                 password='a#=d,F*No6)D'
             )
             logging.info("Conexão com o MySQL estabelecida com sucesso")
@@ -27,38 +27,49 @@ class DatabaseManager:
             logging.error(f"Erro ao conectar ao MySQL: {e}")
             raise
 
+    def validate_user_data(self, user_data):
+        """Valida os dados do usuário antes do registro"""
+        required_fields = {
+            'base': ['name', 'sobrenome', 'tipo', 'nascimento', 'unidade', 'permissao'],
+            'funcionario': ['cargo', 'setor', 'data_admissao'],
+            'aluno': ['matricula', 'curso', 'turma'],
+            'visitante': ['motivo_visita', 'visitado', 'data_visita']
+        }
+
+        # Verifica campos básicos
+        for field in required_fields['base']:
+            if field not in user_data or user_data[field] in (None, ''):
+                raise ValueError(f"Campo obrigatório faltando: {field}")
+
+        # Verifica campos específicos do tipo
+        user_type = user_data['tipo']
+        if user_type not in ['funcionario', 'aluno', 'visitante']:
+            raise ValueError("Tipo de usuário inválido")
+
+        for field in required_fields[user_type]:
+            if field not in user_data[user_type] or user_data[user_type][field] in (None, ''):
+                raise ValueError(f"Campo obrigatório faltando para {user_type}: {field}")
+
+        return True
+
     def register_user(self, user_data):
         try:
             cursor = self.connection.cursor()
 
             user_query = """
             INSERT INTO usuario (
-                name, sobrenome, tipo, email, telefone, cpf, rg, nascimento,
-                unidade, observacoes, permissao, endereco_rua, endereco_numero,
-                endereco_complemento, endereco_bairro, endereco_cidade,
-                endereco_estado, endereco_cep
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                name, sobrenome, tipo, nascimento,
+                unidade, observacoes, permissao,) VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
 
             user_values = (
                 user_data['name'],
                 user_data['sobrenome'],
                 user_data['tipo'],
-                user_data['email'],
-                user_data['telefone'],
-                user_data['cpf'],
-                user_data['rg'],
                 user_data['nascimento'],
                 user_data['unidade'],
                 user_data['observacoes'],
                 user_data['permisso'],
-                user_data['endereco']['rua'],
-                user_data['endereco']['numero'],
-                user_data['endereco']['complemento'],
-                user_data['endereco']['bairro'],
-                user_data['endereco']['cidade'],
-                user_data['endereco']['estado'],
-                user_data['endereco']['cep']
             )
 
             cursor.execute(user_query, user_values)
@@ -158,21 +169,8 @@ def coletar_dados_usuario():
         "name": input("Nome: "),
         "sobrenome": input("Sobrenome: "),
         "tipo": None,
-        "email": input("Email: "),
-        "telefone": input("Telefone: "),
-        "cpf": input("CPF: "),
-        "rg": input("RG: "),
         "nascimento": input("Data de Nascimento (YYYY-MM-DD): "),
         "unidade": input("Unidade: "),
-        "endereco": {
-            "rua": input("Rua: "),
-            "numero": input("Número: "),
-            "complemento": input("Complemento (opcional): "),
-            "bairro": input("Bairro: "),
-            "cidade": input("Cidade: "),
-            "estado": input("Estado (sigla): "),
-            "cep": input("CEP: ")
-        },
         "observacoes": input("Observações: "),
         "permisso": input("Tem permissão? (s/n): ").lower() == 's'
     }

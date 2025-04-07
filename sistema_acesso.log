@@ -1,2 +1,10 @@
 2025-04-07 09:14:17,872 - ERROR - Erro ao conectar ao MySQL: 1045 (28000): Access denied for user 'dougl947_user'@'179-125-137-56.dynamic.desktop.com.br' (using password: NO)
 2025-04-07 09:14:47,851 - ERROR - Erro ao conectar ao MySQL: 1045 (28000): Access denied for user 'dougl947_user'@'179-125-137-56.dynamic.desktop.com.br' (using password: YES)
+2025-04-07 09:31:13,051 - INFO - Conexão com o MySQL estabelecida com sucesso
+2025-04-07 09:32:41,578 - ERROR - Erro ao cadastrar usuário: 1054 (42S22): Unknown column 'email' in 'field list'
+2025-04-07 09:32:41,578 - ERROR - Falha no cadastro: 1054 (42S22): Unknown column 'email' in 'field list'
+2025-04-07 09:32:42,341 - INFO - Conexão com MySQL encerrada
+2025-04-07 09:36:31,131 - INFO - Conexão com o MySQL estabelecida com sucesso
+2025-04-07 09:37:11,300 - ERROR - Erro ao cadastrar usuário: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ') VALUES ('Douglas', 'Wenzel', 'funcionario', '2002-03-15', 'FATEC-VOTORANTIM', ' at line 3
+2025-04-07 09:37:11,300 - ERROR - Falha no cadastro: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ') VALUES ('Douglas', 'Wenzel', 'funcionario', '2002-03-15', 'FATEC-VOTORANTIM', ' at line 3
+2025-04-07 09:37:12,081 - INFO - Conexão com MySQL encerrada
