@@ -19,7 +19,12 @@ def controle_acesso():
     while True:
         ret, frame = cap.read()
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50))
+        faces = face_cascade.detectMultiScale(
+            gray_frame,
+            scaleFactor=1.05,
+            minNeighbors=3,
+            minSize=(80, 80)
+        )
 
         for (x, y, w, h) in faces:
             face_roi = gray_frame[y:y + h, x:x + w]
