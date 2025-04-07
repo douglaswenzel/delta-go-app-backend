@@ -11,7 +11,7 @@ def treinamento():
     for usuario in os.listdir(pasta_usuarios):
         usuario_path = f'{pasta_usuarios}/{usuario}'
         if os.path.isdir(usuario_path):
-            id_usuario = int(usuario)  # O ID é o nome da pasta
+            id_usuario = int(usuario)
             for arquivo in os.listdir(usuario_path):
                 caminho_imagem = f'{usuario_path}/{arquivo}'
                 img = cv2.imread(caminho_imagem, cv2.IMREAD_GRAYSCALE)

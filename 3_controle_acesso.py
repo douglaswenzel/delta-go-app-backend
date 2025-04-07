@@ -17,14 +17,14 @@ def controle_acesso():
 
         for (x, y, w, h) in faces:
             face_roi = gray_frame[y:y + h, x:x + w]
-            face_roi_resized = cv2.resize(face_roi, (200, 200))
+            face_roi_resized = cv2.resize(face_roi, (100, 100))
             face_roi_equalized = cv2.equalizeHist(face_roi_resized)
 
 
             user_id, confidence = recognizer.predict(face_roi_equalized)
 
 
-            if confidence < 66:
+            if confidence < 90:
                 color = (0, 255, 0)
                 label = f"ID: {user_id} (Conf: {confidence:.2f})"
             else:
