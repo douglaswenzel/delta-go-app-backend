@@ -204,3 +204,40 @@ def coletar_dados_usuario():
         }
 
     return user_data
+
+
+def cadastrar_usuario_completo():
+    db = DatabaseManager()
+
+    try:
+        # 1. Registrar log de início do cadastro
+        db.log_access(acao="INICIO_CADASTRO", descricao="Início do processo de cadastro")
+
+        # 2. Coletar dados do usuário
+        user_data = coletar_dados_usuario()
+
+        # 3. Registrar no banco de dados
+        user_id = db.register_user(user_data)
+        db.log_access(user_id, "CADASTRO_DADOS", "Dados pessoais cadastrados")
+
+        # 4. Capturar imagens faciais
+        print("\nAgora vamos capturar as imagens para reconhecimento facial...")
+        photo_paths = cadastrar_usuario(user_id)
+
+        # 5. Registrar caminhos das fotos no banco
+        db.register_photos(user_id, photo_paths)
+        db.log_access(user_id, "CADASTRO_FOTOS", f"{len(photo_paths)} fotos cadastradas")
+
+        print("\nCadastro completo realizado com sucesso!")
+        db.log_access(user_id, "CADASTRO_CONCLUIDO", "Processo de cadastro concluído")
+
+    except Exception as e:
+        logging.error(f"Falha no cadastro: {e}")
+        db.log_access(acao="ERRO_CADASTRO", descricao=f"Erro durante cadastro: {str(e)}")
+        print("Ocorreu um erro durante o cadastro. Por favor, tente novamente.")
+    finally:
+        del db
+
+
+if __name__ == "__main__":
+    cadastrar_usuario_completo()
