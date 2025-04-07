@@ -130,3 +130,23 @@ class DatabaseManager:
             raise
         finally:
             cursor.close()
+
+    def log_access(self, user_id=None, acao="", descricao="", ip_address="", dispositivo=""):
+        try:
+            cursor = self.connection.cursor()
+            log_query = """
+            INSERT INTO logs_acesso (usuario_id, acao, descricao, ip_address, dispositivo)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(log_query, (user_id, acao, descricao, ip_address, dispositivo))
+            self.connection.commit()
+        except Error as e:
+            logging.error(f"Erro ao registrar log: {e}")
+        finally:
+            cursor.close()
+
+    def __del__(self):
+        if hasattr(self, 'connection') and self.connection.is_connected():
+            self.connection.close()
+            logging.info("Conexão com MySQL encerrada")
+
