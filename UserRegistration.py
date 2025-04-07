@@ -1,31 +1,24 @@
 import mysql.connector
 from mysql.connector import Error
-import cv2
-import numpy as np
-import os
-from time import time
-import logging
 from datetime import datetime
+import logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    filename='sistema_acesso.log'
-)
 
-class DatabaseManager:
-    def __init__(self):
+class UserRegistration:
+    def __init__(self, db_config):
+        self.db_config = db_config
+        self.connection = None
+        self.logger = logging.getLogger('UserRegistration')
+
+    def connect(self):
+        """Estabelece conexão com o banco de dados"""
         try:
-            self.connection = mysql.connector.connect(
-                host='162.241.2.230',
-                database='dougl947_DeltaGo',
-                user='dougl947_user2',
-                password='a#=d,F*No6)D'
-            )
-            logging.info("Conexão com o MySQL estabelecida com sucesso")
+            self.connection = mysql.connector.connect(**self.db_config)
+            self.logger.info("Conexão com o banco de dados estabelecida")
+            return True
         except Error as e:
-            logging.error(f"Erro ao conectar ao MySQL: {e}")
-            raise
+            self.logger.error(f"Erro ao conectar ao banco: {e}")
+            return False
 
     def validate_user_data(self, user_data):
         """Valida os dados do usuário antes do registro"""
@@ -181,100 +174,39 @@ class DatabaseManager:
             if self.connection and self.connection.is_connected():
                 self.connection.close()
 
-    def log_access(self, user_id=None, acao="", descricao="", ip_address="", dispositivo=""):
-        try:
-            cursor = self.connection.cursor()
-            log_query = """
-            INSERT INTO logs_acesso (usuario_id, acao, descricao, ip_address, dispositivo)
-            VALUES (%s, %s, %s, %s, %s)
-            """
-            cursor.execute(log_query, (user_id, acao, descricao, ip_address, dispositivo))
-            self.connection.commit()
-        except Error as e:
-            logging.error(f"Erro ao registrar log: {e}")
-        finally:
-            cursor.close()
 
-    def __del__(self):
-        if hasattr(self, 'connection') and self.connection.is_connected():
-            self.connection.close()
-            logging.info("Conexão com MySQL encerrada")
-
-def coletar_dados_usuario():
-    """Coleta dados do usuário via terminal"""
-    print("\n--- Cadastro de Usuário ---")
+# Exemplo de uso
+if __name__ == "__main__":
+    db_config = {
+        'host': '162.241.2.230',
+        'database': 'dougl947_DeltaGo',
+        'user': 'dougl947_user2',
+        'password': 'a#=d,F*No6)D'
+    }
 
     user_data = {
-        "name": input("Nome: "),
-        "sobrenome": input("Sobrenome: "),
-        "tipo": None,
-        "nascimento": input("Data de Nascimento (YYYY-MM-DD): "),
-        "unidade": input("Unidade: "),
-        "observacoes": input("Observações: "),
-        "permisso": input("Tem permissão? (s/n): ").lower() == 's'
+        'name': 'Douglas',
+        'sobrenome': 'Wenzel',
+        'tipo': 'funcionario',
+        'nascimento': '2002-03-15',
+        'unidade': 'FATEC-VOTORANTIM',
+        'observacoes': 'Desenvolvedor do sistema',
+        'permissao': True,
+        'funcionario': {
+            'cargo': 'Analista de Sistemas',
+            'setor': 'TI',
+            'data_admissao': '2023-01-10'
+        }
     }
-    tipo = ""
-    while tipo not in ['funcionario', 'aluno', 'visitante']:
-        tipo = input("Tipo (funcionario/aluno/visitante): ").lower()
-
-    user_data["tipo"] = tipo
-
-    if tipo == "funcionario":
-        user_data["funcionario"] = {
-            "cargo": input("Cargo: "),
-            "setor": input("Setor: "),
-            "data_admissao": input("Data de Admissão (YYYY-MM-DD): ")
-        }
-    elif tipo == "aluno":
-        user_data["aluno"] = {
-            "matricula": input("Matrícula: "),
-            "curso": input("Curso: "),
-            "turma": input("Turma: "),
-            "data_ingresso": input("Data de Ingresso (YYYY-MM-DD): ")
-        }
-    else:
-        user_data["visitante"] = {
-            "motivo_visita": input("Motivo da Visita: "),
-            "visitado": input("Visitado: "),
-            "data_visita": input("Data da Visita (YYYY-MM-DD HH:MM): "),
-            "empresa": input("Empresa: ")
-        }
-
-    return user_data
-
-
-def cadastrar_usuario_completo():
-    db = DatabaseManager()
 
     try:
-        # 1. Registrar log de início do cadastro
-        db.log_access(acao="INICIO_CADASTRO", descricao="Início do processo de cadastro")
+        registration = UserRegistration(db_config)
+        user_id = registration.register_user(user_data)
 
-        # 2. Coletar dados do usuário
-        user_data = coletar_dados_usuario()
+        # Após capturar as fotos (usando sua função cadastrar_usuario)
+        photo_paths = [f'usuarios/{user_id}/001.jpg', f'usuarios/{user_id}/002.jpg']
+        registration.register_user_photos(user_id, photo_paths)
 
-        # 3. Registrar no banco de dados
-        user_id = db.register_user(user_data)
-        db.log_access(user_id, "CADASTRO_DADOS", "Dados pessoais cadastrados")
-
-        # 4. Capturar imagens faciais
-        print("\nAgora vamos capturar as imagens para reconhecimento facial...")
-        photo_paths = cadastrar_usuario(user_id)
-
-        # 5. Registrar caminhos das fotos no banco
-        db.register_photos(user_id, photo_paths)
-        db.log_access(user_id, "CADASTRO_FOTOS", f"{len(photo_paths)} fotos cadastradas")
-
-        print("\nCadastro completo realizado com sucesso!")
-        db.log_access(user_id, "CADASTRO_CONCLUIDO", "Processo de cadastro concluído")
-
+        print(f"Usuário {user_id} registrado com sucesso!")
     except Exception as e:
-        logging.error(f"Falha no cadastro: {e}")
-        db.log_access(acao="ERRO_CADASTRO", descricao=f"Erro durante cadastro: {str(e)}")
-        print("Ocorreu um erro durante o cadastro. Por favor, tente novamente.")
-    finally:
-        del db
-
-
-if __name__ == "__main__":
-    cadastrar_usuario_completo()
+        print(f"Erro ao registrar usuário: {e}")
