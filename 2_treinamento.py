@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import os
+from time import time
+
 
 def treinamento():
     face_cascade = cv2.CascadeClassifier('Cascade/haarcascade_frontalface_default.xml')

@@ -1,5 +1,7 @@
 import cv2
+import numpy as np
 import os
+from time import time
 
 def calculate_sharpness(image):
     return cv2.Laplacian(image, cv2.CV_64F).var()
@@ -23,43 +25,92 @@ def validate_eyes(eye_regions):
 
     return True
 
+
 def cadastrar_usuario(user_id):
-    cap = cv2.VideoCapture(2)  # Certifique-se de que o índice da câmera está correto.
-    print(f"Capturando imagens para o usuário ID: {user_id}")
+    cap = cv2.VideoCapture(2)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
+    output_dir = f'usuarios/{user_id:03d}'
+    os.makedirs(output_dir, exist_ok=True)
 
-    if not os.path.exists(f'usuarios/{user_id}'):
-        os.makedirs(f'usuarios/{user_id}')
-
-    count = 0
     face_cascade = cv2.CascadeClassifier('Cascade/haarcascade_frontalface_default.xml')
     eye_cascade = cv2.CascadeClassifier('Cascade/haarcascade_eye.xml')
 
+    count = 0
+    last_capture = 0
+    required_poses = ['center', 'left', 'right', 'up', 'down']
+    current_pose_index = 0
+
+    # Variáveis de inicialização
+    x, y, w, h = 0, 0, 0, 0
+
     while count < 35:
         ret, frame = cap.read()
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        equalized_frame = cv2.equalizeHist(gray_frame)
+        if not ret: continue
 
+        processed = apply_adaptive_preprocessing(frame)
+        faces = face_cascade.detectMultiScale(
+            processed,
+            scaleFactor=1.05,
+            minNeighbors=6,
+            minSize=(100, 100),
+            flags=cv2.CASCADE_FIND_BIGGEST_OBJECT
+        )
 
-        faces = face_cascade.detectMultiScale(equalized_frame, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50))
+        frame_has_face = False
+        if len(faces) == 1:
+            (x, y, w, h) = faces[0]
+            face_roi = processed[y:y + h, x:x + w]
 
-        for (x, y, w, h) in faces:
-            face_roi = equalized_frame[y:y + h, x:x + w]
-            eyes = eye_cascade.detectMultiScale(face_roi, scaleFactor=1.1, minNeighbors=3, minSize=(15, 15))
+            eyes = eye_cascade.detectMultiScale(
+                face_roi,
+                scaleFactor=1.1,
+                minNeighbors=5,
+                minSize=(30, 30)
+            )
 
+            if validate_eyes(eyes) and calculate_sharpness(face_roi) > 50:
+                current_time = time()
+                if (current_time - last_capture) > 1:
+                    # Captura múltiplas variações por pose
+                    for angle in [-10, 0, 10]:
+                        M = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
+                        rotated = cv2.warpAffine(face_roi, M, (w, h))
 
-            if len(eyes) >= 2:
-                face_roi_resized = cv2.resize(face_roi, (200, 200))
-                cv2.imwrite(f'usuarios/{user_id}/{count}.jpg', face_roi_resized)
-                count += 1
-                print(f"Imagem {count} capturada para o usuário ID: {user_id}")
+                        aligned_face = cv2.resize(rotated, (200, 200))
+                        cv2.imwrite(f'{output_dir}/{count:03d}.jpg', aligned_face)
+                        count += 1
+                        last_capture = current_time
+                        print(f"Captura {count} - Pose: {required_poses[current_pose_index]}")
 
-        cv2.imshow('Capturando Imagens', frame)
+                    # Atualiza pose a cada 3 capturas
+                    if count % 3 == 0:
+                        current_pose_index = (current_pose_index + 1) % len(required_poses)
+
+                    frame_has_face = True
+
+        # Feedback visual
+        if frame_has_face:
+            color = (0, 255, 0)
+            text = f"POSE: {required_poses[current_pose_index].upper()}"
+        else:
+            color = (0, 0, 255)
+            text = "Centralize o rosto na area indicada"
+
+        if len(faces) == 1:
+            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+
+        cv2.putText(frame, text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+        cv2.putText(frame, f"Capturas: {count}/35", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+        cv2.imshow('Registro Facial - Siga as Instrucoes', frame)
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
     cv2.destroyAllWindows()
-    print("Cadastro concluído!")
+    print("Cadastro concluído com sucesso!")
 
-cadastrar_usuario(3)
+cadastrar_usuario(1)
