@@ -53,13 +53,21 @@ class DatabaseManager:
         return True
 
     def register_user(self, user_data):
+        """Registra um novo usuário no sistema"""
+        if not self.connect():
+            raise ConnectionError("Não foi possível conectar ao banco de dados")
+
+        cursor = None
         try:
+            self.validate_user_data(user_data)
             cursor = self.connection.cursor()
 
+            # 1. Registrar dados básicos do usuário
             user_query = """
             INSERT INTO usuario (
-                name, sobrenome, tipo, nascimento,
-                unidade, observacoes, permissao,) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                name, sobrenome, tipo, nascimento, unidade, 
+                observacoes, permissao
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
 
             user_values = (
@@ -68,60 +76,37 @@ class DatabaseManager:
                 user_data['tipo'],
                 user_data['nascimento'],
                 user_data['unidade'],
-                user_data['observacoes'],
-                user_data['permisso'],
+                user_data.get('observacoes', ''),
+                int(user_data['permissao'])
             )
 
             cursor.execute(user_query, user_values)
             user_id = cursor.lastrowid
 
+            # 2. Registrar dados específicos do tipo
             if user_data['tipo'] == 'funcionario':
-                funcionario_query = """
-                INSERT INTO funcionario (user_id, cargo, setor, data_admissao)
-                VALUES (%s, %s, %s, %s)
-                """
-                cursor.execute(funcionario_query, (
-                    user_id,
-                    user_data['funcionario']['cargo'],
-                    user_data['funcionario']['setor'],
-                    user_data['funcionario']['data_admissao']
-                ))
+                self._register_employee(cursor, user_id, user_data['funcionario'])
             elif user_data['tipo'] == 'aluno':
-                aluno_query = """
-                INSERT INTO aluno (user_id, matricula, curso, turma, data_ingresso)
-                VALUES (%s, %s, %s, %s, %s)
-                """
-                cursor.execute(aluno_query, (
-                    user_id,
-                    user_data['aluno']['matricula'],
-                    user_data['aluno']['curso'],
-                    user_data['aluno']['turma'],
-                    user_data['aluno']['data_ingresso']
-                ))
+                self._register_student(cursor, user_id, user_data['aluno'])
             else:
-                visitante_query = """
-                INSERT INTO visitante (user_id, motivo_visita, visitado, data_visita, empresa)
-                VALUES (%s, %s, %s, %s, %s)
-                """
-                cursor.execute(visitante_query, (
-                    user_id,
-                    user_data['visitante']['motivo_visita'],
-                    user_data['visitante']['visitado'],
-                    user_data['visitante']['data_visita'],
-                    user_data['visitante']['empresa']
-                ))
+                self._register_visitor(cursor, user_id, user_data['visitante'])
 
             self.connection.commit()
-            logging.info(f"Usuário {user_id} cadastrado com sucesso no banco de dados")
+            self.logger.info(f"Usuário {user_id} registrado com sucesso")
             return user_id
 
         except Error as e:
             self.connection.rollback()
-            logging.error(f"Erro ao cadastrar usuário: {e}")
+            self.logger.error(f"Erro no banco de dados: {e}")
+            raise
+        except ValueError as e:
+            self.logger.error(f"Erro de validação: {e}")
             raise
         finally:
-            cursor.close()
-
+            if cursor:
+                cursor.close()
+            if self.connection and self.connection.is_connected():
+                self.connection.close()
     def register_photos(self, user_id, photo_paths):
         try:
             cursor = self.connection.cursor()
