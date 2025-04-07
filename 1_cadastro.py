@@ -11,6 +11,18 @@ def apply_adaptive_preprocessing(frame):
     denoised = cv2.fastNlMeansDenoising(normalized, h=15)
     return denoised
 
+
+def validate_eyes(eye_regions):
+    if len(eye_regions) < 2: return False
+
+    eye_sizes = [w * h for (x, y, w, h) in eye_regions]
+    avg_eye_size = np.mean(eye_sizes)
+
+    size_ratio = max(eye_sizes) / min(eye_sizes)
+    if size_ratio > 1.5: return False
+
+    return True
+
 def cadastrar_usuario(user_id):
     cap = cv2.VideoCapture(2)  # Certifique-se de que o índice da câmera está correto.
     print(f"Capturando imagens para o usuário ID: {user_id}")
