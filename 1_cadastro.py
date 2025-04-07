@@ -1,6 +1,10 @@
 import cv2
 import os
 
+def calculate_sharpness(image):
+    return cv2.Laplacian(image, cv2.CV_64F).var()
+
+
 def cadastrar_usuario(user_id):
     cap = cv2.VideoCapture(2)  # Certifique-se de que o índice da câmera está correto.
     print(f"Capturando imagens para o usuário ID: {user_id}")
@@ -40,4 +44,4 @@ def cadastrar_usuario(user_id):
     cv2.destroyAllWindows()
     print("Cadastro concluído!")
 
-cadastrar_usuario(1)
+cadastrar_usuario(3)
