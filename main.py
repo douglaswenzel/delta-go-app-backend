@@ -150,25 +150,36 @@ class DatabaseManager:
             visitor_data['data_visita']
         ))
 
-    def register_photos(self, user_id, photo_paths):
+    def register_user_photos(self, user_id, photo_paths):
+        """Registra as fotos do usuário no banco de dados"""
+        if not self.connect():
+            raise ConnectionError("Não foi possível conectar ao banco de dados")
+
+        cursor = None
         try:
             cursor = self.connection.cursor()
-            photo_query = """
-            INSERT INTO fotos_usuarios (usuario_id, caminho_foto)
-            VALUES (%s, %s)
+            query = """
+            INSERT INTO fotos_usuarios (
+                usuario_id, caminho_foto
+            ) VALUES (%s, %s)
             """
 
             for path in photo_paths:
-                cursor.execute(photo_query, (user_id, path))
+                cursor.execute(query, (user_id, path))
 
             self.connection.commit()
-            logging.info(f"Fotos do usuário {user_id} registradas com sucesso")
+            self.logger.info(f"Fotos do usuário {user_id} registradas com sucesso")
+            return True
+
         except Error as e:
             self.connection.rollback()
-            logging.error(f"Erro ao registrar fotos: {e}")
+            self.logger.error(f"Erro ao registrar fotos: {e}")
             raise
         finally:
-            cursor.close()
+            if cursor:
+                cursor.close()
+            if self.connection and self.connection.is_connected():
+                self.connection.close()
 
     def log_access(self, user_id=None, acao="", descricao="", ip_address="", dispositivo=""):
         try:
