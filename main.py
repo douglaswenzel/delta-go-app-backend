@@ -150,3 +150,57 @@ class DatabaseManager:
             self.connection.close()
             logging.info("Conexão com MySQL encerrada")
 
+def coletar_dados_usuario():
+    """Coleta dados do usuário via terminal"""
+    print("\n--- Cadastro de Usuário ---")
+
+    user_data = {
+        "name": input("Nome: "),
+        "sobrenome": input("Sobrenome: "),
+        "tipo": None,
+        "email": input("Email: "),
+        "telefone": input("Telefone: "),
+        "cpf": input("CPF: "),
+        "rg": input("RG: "),
+        "nascimento": input("Data de Nascimento (YYYY-MM-DD): "),
+        "unidade": input("Unidade: "),
+        "endereco": {
+            "rua": input("Rua: "),
+            "numero": input("Número: "),
+            "complemento": input("Complemento (opcional): "),
+            "bairro": input("Bairro: "),
+            "cidade": input("Cidade: "),
+            "estado": input("Estado (sigla): "),
+            "cep": input("CEP: ")
+        },
+        "observacoes": input("Observações: "),
+        "permisso": input("Tem permissão? (s/n): ").lower() == 's'
+    }
+    tipo = ""
+    while tipo not in ['funcionario', 'aluno', 'visitante']:
+        tipo = input("Tipo (funcionario/aluno/visitante): ").lower()
+
+    user_data["tipo"] = tipo
+
+    if tipo == "funcionario":
+        user_data["funcionario"] = {
+            "cargo": input("Cargo: "),
+            "setor": input("Setor: "),
+            "data_admissao": input("Data de Admissão (YYYY-MM-DD): ")
+        }
+    elif tipo == "aluno":
+        user_data["aluno"] = {
+            "matricula": input("Matrícula: "),
+            "curso": input("Curso: "),
+            "turma": input("Turma: "),
+            "data_ingresso": input("Data de Ingresso (YYYY-MM-DD): ")
+        }
+    else:
+        user_data["visitante"] = {
+            "motivo_visita": input("Motivo da Visita: "),
+            "visitado": input("Visitado: "),
+            "data_visita": input("Data da Visita (YYYY-MM-DD HH:MM): "),
+            "empresa": input("Empresa: ")
+        }
+
+    return user_data
