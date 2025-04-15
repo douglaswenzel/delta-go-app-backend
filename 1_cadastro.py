@@ -113,21 +113,17 @@ def cadastrar_usuario(user_id):
 
                 frame_has_face = True
 
-        # Feedback visual
-        if frame_has_face:
-            color = (0, 255, 0)
-            text = f"POSE: {required_poses[current_pose_index].upper()}"
-        else:
-            color = (0, 0, 255)
-            text = "Centralize o rosto na area indicada"
+        color = (0, 255, 0) if frame_has_face else (0, 0, 255)
+        text = f"POSE: {required_poses[current_pose_index].upper()}" if frame_has_face else "Centralize o rosto na área indicada"
 
         if len(faces) == 1:
             cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
 
         cv2.putText(frame, text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-        cv2.putText(frame, f"Capturas: {count}/35", (10, 30),
+        cv2.putText(frame, f"Capturas: {count}/{TOTAL_SAMPLES}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
-        cv2.imshow('Registro Facial - Siga as Instrucoes', frame)
+
+        cv2.imshow('Registro Facial - Siga as Instruções', frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
