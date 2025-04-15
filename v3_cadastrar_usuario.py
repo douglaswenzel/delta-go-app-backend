@@ -16,7 +16,7 @@ def cadastro_usuario():
 
         cv2.imshow('Cadastro de Face', frame)
 
-        if cv2.waitKey(1) & 0xFF == ord('s'):  # Pressione 's' para salvar o rosto
+        if cv2.waitKey(1) & 0xFF == ord('s'):
             if register_face(user_id, frame):
                 print("Cadastro concluído!")
                 break

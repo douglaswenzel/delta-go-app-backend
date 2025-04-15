@@ -2,7 +2,10 @@ import cv2
 import os
 import numpy as np
 from datetime import datetime, timedelta
-from modules.registrar_log_acesso import registrar_log_acesso
+from modules.log_acesso import registrar_log_acesso
+from modules.usersave import obter_nome_usuario
+
+
 
 
 def controle_acesso():
@@ -32,9 +35,9 @@ def controle_acesso():
             frame[:border_width, :] = [0, 255, 0]
             frame[-border_width:, :] = [0, 255, 0]  
             frame[:, :border_width] = [0, 255, 0]
-            frame[:, -border_width:] = [0, 255, 0] 
+            frame[:, -border_width:] = [0, 255, 0]
 
-            text = f"Acesso autorizado para {last_recognized_id}"
+            text = f"Acesso autorizado para {nome_usuario}"
             text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
             text_x = (frame.shape[1] - text_size[0]) // 2
             text_y = frame.shape[0] - 30
@@ -56,11 +59,13 @@ def controle_acesso():
                 face_roi_equalized = cv2.equalizeHist(face_roi_resized)
 
                 user_id, confidence = recognizer.predict(face_roi_equalized)
+                nome_usuario = obter_nome_usuario(user_id)
 
-                if confidence < 85:
+                if confidence < 95:
                     access_granted_time = current_time
                     last_recognized_id = user_id
                     color = (0, 255, 0)
+                    label = f"{nome_usuario} ({confidence:.1f}%)"
 
                     registrar_log_acesso(user_id=user_id, acao="ENTRADA", confidence=confidence)
                 else:

@@ -1,5 +1,7 @@
 import mysql.connector
 from datetime import datetime, timedelta
+from modules.usersave import obter_nome_usuario
+
 
 def registrar_log_acesso(user_id, acao, confidence, dispositivo="CATRACA 01"):
     try:
@@ -18,13 +20,14 @@ def registrar_log_acesso(user_id, acao, confidence, dispositivo="CATRACA 01"):
 
         data_hora = datetime.now()
         descricao = f"Acesso {acao} com confiança de {confidence:.2f}%"
-        ip_address = "192.168.0.10"  # Pode ajustar para pegar dinamicamente se necessário
+        ip_address = "192.168.0.10"
 
         valores = (user_id, acao, descricao, data_hora, ip_address, dispositivo)
         cursor.execute(query, valores)
         conn.commit()
+        nome_usuario = obter_nome_usuario(user_id)
 
-        print(f"Log registrado para usuário {user_id} - {acao} - Confiança: {confidence:.2f}%")
+        print(f"Log registrado para usuário : {nome_usuario} com ID: {user_id} - {acao} - Confiança: {confidence:.2f}%")
 
     except mysql.connector.Error as err:
         print(f"Erro ao registrar log: {err}")

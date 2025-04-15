@@ -7,8 +7,12 @@ from modules.detection import detect_faces, detect_eyes
 from modules.pose_estimation import estimate_head_orientation, sugestao_pose
 from modules.validation import validate_eyes
 from modules.face_capture import capture_face_variations
+from modules.usersave import salvar_usuario_no_banco, salvar_fotos_usuario, obter_proximo_user_id
+
+
 
 def cadastrar_usuario(user_id):
+    user_id = obter_proximo_user_id()
     cap = cv2.VideoCapture(2)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -52,7 +56,6 @@ def cadastrar_usuario(user_id):
 
                 frame_has_face = True
 
-        # Estimar orientação
         orientation = estimate_head_orientation(frame)
         if orientation:
             yaw, pitch = orientation
