@@ -7,6 +7,10 @@ MIN_SHARPNESS = 80
 MIN_EYE_SIZE_RATIO = 1.3
 MIN_EYE_AREA = 900
 
+def check_lighting(face_roi):
+    avg_brightness = np.mean(face_roi)
+    return 70 <= avg_brightness <= 200
+
 def calculate_sharpness(image):
     return cv2.Laplacian(image, cv2.CV_64F).var()
 
