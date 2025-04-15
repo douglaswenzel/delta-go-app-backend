@@ -16,14 +16,16 @@ def controle_acesso():
     ids_usuarios = np.load('ids_usuarios.npy')
 
     cap = cv2.VideoCapture(2)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
     while True:
         ret, frame = cap.read()
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(
             gray_frame,
-            scaleFactor=1.05,
-            minNeighbors=3,
+            scaleFactor=1.1,
+            minNeighbors=5,
             minSize=(80, 80)
         )
 
@@ -36,7 +38,7 @@ def controle_acesso():
             user_id, confidence = recognizer.predict(face_roi_equalized)
 
 
-            if confidence < 95:
+            if confidence < 85:
                 color = (0, 255, 0)
                 label = f"ID: {user_id} (Conf: {confidence:.2f})"
             else:
