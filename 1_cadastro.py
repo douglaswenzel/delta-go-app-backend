@@ -1,90 +1,12 @@
 import cv2
-import numpy as np
 import os
 from time import time
-import mediapipe as mp
-
-MIN_SHARPNESS = 80
-MIN_EYE_SIZE_RATIO = 1.3
-MIN_EYE_AREA = 900
-CAPTURE_DELAY = 1.5
-TOTAL_SAMPLES = 35
-RESIZED_DIM = (200, 200)
-
-mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1,
-                                   refine_landmarks=True, min_detection_confidence=0.5)
-
-def sugestao_pose(angle_yaw, angle_pitch):
-    if angle_yaw < -10:
-        return "VIRE UM POUCO À DIREITA"
-    elif angle_yaw > 10:
-        return "VIRE UM POUCO À ESQUERDA"
-    elif angle_pitch < -3:
-        return "LEVANTE LEVEMENTE O ROSTO"
-    elif angle_pitch > 3:
-        return "ABAIXE UM POUCO O ROSTO"
-    else:
-        return "MANTENHA A POSIÇÃO"
-
-def estimate_head_orientation(image):
-    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    results = face_mesh.process(rgb_image)
-
-    if not results.multi_face_landmarks:
-        return None
-
-    landmarks = results.multi_face_landmarks[0].landmark
-
-    left_eye = np.array([landmarks[33].x, landmarks[33].y])
-    right_eye = np.array([landmarks[263].x, landmarks[263].y])
-    nose_tip = np.array([landmarks[1].x, landmarks[1].y])
-    chin = np.array([landmarks[152].x, landmarks[152].y])
-
-    eye_delta_x = right_eye[0] - left_eye[0]
-    eye_delta_y = right_eye[1] - left_eye[1]
-
-    angle_yaw = np.arctan2(eye_delta_y, eye_delta_x) * 180 / np.pi
-    angle_pitch = (nose_tip[1] - chin[1]) * 100
-
-    return angle_yaw, angle_pitch
-
-
-def check_lighting(face_roi):
-    avg_brightness = np.mean(face_roi)
-    return 70 <= avg_brightness <= 200
-
-def calculate_sharpness(image):
-    return cv2.Laplacian(image, cv2.CV_64F).var()
-
-def apply_adaptive_preprocessing(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-    normalized = clahe.apply(gray)
-    denoised = cv2.fastNlMeansDenoising(normalized, h=15)
-    return denoised
-
-
-def validate_eyes(eye_regions):
-    if len(eye_regions) < 2:
-        return False
-
-    eye_areas = [w * h for (x, y, w, h) in eye_regions]
-    if any(area < MIN_EYE_AREA for area in eye_areas):
-        return False
-
-    size_ratio = max(eye_areas) / min(eye_areas)
-    return size_ratio <= MIN_EYE_SIZE_RATIO
-
-def capture_face_variations(face_roi, output_path, count, pose):
-    for angle in [-10, 0, 10]:
-        M = cv2.getRotationMatrix2D((face_roi.shape[1]/2, face_roi.shape[0]/2), angle, 1)
-        rotated = cv2.warpAffine(face_roi, M, (face_roi.shape[1], face_roi.shape[0]))
-        resized = cv2.resize(rotated, RESIZED_DIM)
-        cv2.imwrite(f'{output_path}/{count:03d}_{pose}.jpg', resized)
-        count += 1
-    return count
-
+from config import *
+from modules.preprocessing import apply_adaptive_preprocessing, calculate_sharpness, check_lighting
+from modules.detection import detect_faces, detect_eyes
+from modules.pose_estimation import estimate_head_orientation, sugestao_pose
+from modules.validation import validate_eyes
+from modules.face_capture import capture_face_variations
 
 def cadastrar_usuario(user_id):
     cap = cv2.VideoCapture(2)
@@ -94,41 +16,24 @@ def cadastrar_usuario(user_id):
     output_dir = f'usuarios/{user_id:03d}'
     os.makedirs(output_dir, exist_ok=True)
 
-    face_cascade = cv2.CascadeClassifier('Cascade/haarcascade_frontalface_default.xml')
-    eye_cascade = cv2.CascadeClassifier('Cascade/haarcascade_eye.xml')
-
     count = 0
     last_capture = 0
     required_poses = ['center', 'left', 'right', 'up', 'down']
     current_pose_index = 0
 
-    # Variáveis de inicialização
-    x, y, w, h = 0, 0, 0, 0
-
     while count < TOTAL_SAMPLES:
         ret, frame = cap.read()
-        if not ret: continue
+        if not ret:
+            continue
 
         processed = apply_adaptive_preprocessing(frame)
-        faces = face_cascade.detectMultiScale(
-            processed,
-            scaleFactor=1.05,
-            minNeighbors=6,
-            minSize=(100, 100),
-            flags=cv2.CASCADE_FIND_BIGGEST_OBJECT
-        )
+        faces = detect_faces(processed)
 
         frame_has_face = False
         if len(faces) == 1:
             (x, y, w, h) = faces[0]
             face_roi = processed[y:y + h, x:x + w]
-
-            eyes = eye_cascade.detectMultiScale(
-                face_roi,
-                scaleFactor=1.1,
-                minNeighbors=5,
-                minSize=(30, 30)
-            )
+            eyes = detect_eyes(face_roi)
 
             current_time = time()
 
@@ -137,13 +42,7 @@ def cadastrar_usuario(user_id):
                     check_lighting(face_roi) and
                     (current_time - last_capture) > CAPTURE_DELAY):
 
-                count = capture_face_variations(
-                    face_roi,
-                    output_dir,
-                    count,
-                    required_poses[current_pose_index]
-                )
-
+                count = capture_face_variations(face_roi, output_dir, count, required_poses[current_pose_index])
                 last_capture = current_time
                 print(f"Captura {count} - Pose: {required_poses[current_pose_index]}")
 
@@ -153,17 +52,23 @@ def cadastrar_usuario(user_id):
 
                 frame_has_face = True
 
-        color = (0, 255, 0) if frame_has_face else (0, 0, 255)
-        text = f"POSE: {required_poses[current_pose_index].upper()}" if frame_has_face else "Centralize o rosto na área indicada"
+        # Estimar orientação
+        orientation = estimate_head_orientation(frame)
+        if orientation:
+            yaw, pitch = orientation
+            instrucoes = sugestao_pose(yaw, pitch)
+        else:
+            instrucoes = "Centralize o rosto visivelmente"
 
+        color = (0, 255, 0) if frame_has_face else (0, 0, 255)
         if len(faces) == 1:
+            (x, y, w, h) = faces[0]
             cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
 
-        cv2.putText(frame, text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-        cv2.putText(frame, f"Capturas: {count}/{TOTAL_SAMPLES}", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
-
-        cv2.imshow('Registro Facial - Siga as Instruções', frame)
+        cv2.putText(frame, instrucoes, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+        cv2.putText(frame, f"Capturas: {count}/{TOTAL_SAMPLES}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0),
+                    2)
+        cv2.imshow('Cadastro Facial Inteligente', frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -172,4 +77,6 @@ def cadastrar_usuario(user_id):
     cv2.destroyAllWindows()
     print("Cadastro concluído com sucesso!")
 
-cadastrar_usuario(1)
+
+if __name__ == "__main__":
+    cadastrar_usuario(1)

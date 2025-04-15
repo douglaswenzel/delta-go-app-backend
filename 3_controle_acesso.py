@@ -3,6 +3,7 @@ import os
 import numpy as np
 from datetime import datetime, timedelta
 
+
 def controle_acesso():
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     recognizer = cv2.face.LBPHFaceRecognizer_create(
@@ -56,7 +57,7 @@ def controle_acesso():
 
                 user_id, confidence = recognizer.predict(face_roi_equalized)
 
-                if confidence < 95:
+                if confidence < 50:
                     access_granted_time = current_time
                     last_recognized_id = user_id
                     color = (0, 255, 0)

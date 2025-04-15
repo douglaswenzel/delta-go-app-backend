@@ -3,7 +3,6 @@ import numpy as np
 import os
 from time import time
 
-
 MIN_FACE_SIZE = (100, 100)
 RESIZED_DIM = (200, 200)
 TEST_SIZE = 0.2
