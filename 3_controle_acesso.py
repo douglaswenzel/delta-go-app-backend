@@ -2,6 +2,7 @@ import cv2
 import os
 import numpy as np
 from datetime import datetime, timedelta
+from modules.registrar_log_acesso import registrar_log_acesso
 
 
 def controle_acesso():
@@ -9,7 +10,6 @@ def controle_acesso():
     recognizer = cv2.face.LBPHFaceRecognizer_create(
         radius=2, neighbors=16, grid_x=8, grid_y=8, threshold=85)
     recognizer.read('modelo_lbph.yml')
-    ids_usuarios = np.load('ids_usuarios.npy')
 
     cap = cv2.VideoCapture(2)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -57,11 +57,12 @@ def controle_acesso():
 
                 user_id, confidence = recognizer.predict(face_roi_equalized)
 
-                if confidence < 50:
+                if confidence < 85:
                     access_granted_time = current_time
                     last_recognized_id = user_id
                     color = (0, 255, 0)
-                    label = f"ID: {user_id} (Conf: {confidence:.2f})"
+
+                    registrar_log_acesso(user_id=user_id, acao="ENTRADA", confidence=confidence)
                 else:
                     color = (0, 0, 255)
                     label = "Nao autorizado"
