@@ -65,7 +65,7 @@ def cadastrar_usuario(user_id):
     # Variáveis de inicialização
     x, y, w, h = 0, 0, 0, 0
 
-    while count < 35:
+    while count < TOTAL_SAMPLES:
         ret, frame = cap.read()
         if not ret: continue
 
@@ -90,25 +90,28 @@ def cadastrar_usuario(user_id):
                 minSize=(30, 30)
             )
 
-            if validate_eyes(eyes) and calculate_sharpness(face_roi) > 50:
-                current_time = time()
-                if (current_time - last_capture) > 1:
-                    # Captura múltiplas variações por pose
-                    for angle in [-10, 0, 10]:
-                        M = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
-                        rotated = cv2.warpAffine(face_roi, M, (w, h))
+            current_time = time()
 
-                        aligned_face = cv2.resize(rotated, (200, 200))
-                        cv2.imwrite(f'{output_dir}/{count:03d}.jpg', aligned_face)
-                        count += 1
-                        last_capture = current_time
-                        print(f"Captura {count} - Pose: {required_poses[current_pose_index]}")
+            if (validate_eyes(eyes) and
+                    calculate_sharpness(face_roi) > MIN_SHARPNESS and
+                    check_lighting(face_roi) and
+                    (current_time - last_capture) > CAPTURE_DELAY):
 
-                    # Atualiza pose a cada 3 capturas
-                    if count % 3 == 0:
-                        current_pose_index = (current_pose_index + 1) % len(required_poses)
+                count = capture_face_variations(
+                    face_roi,
+                    output_dir,
+                    count,
+                    required_poses[current_pose_index]
+                )
 
-                    frame_has_face = True
+                last_capture = current_time
+                print(f"Captura {count} - Pose: {required_poses[current_pose_index]}")
+
+                if count % (len(required_poses) * 3) == 0:
+                    current_pose_index = (current_pose_index + 1) % len(required_poses)
+                    print(f"\nMude para a pose: {required_poses[current_pose_index].upper()}\n")
+
+                frame_has_face = True
 
         # Feedback visual
         if frame_has_face:
