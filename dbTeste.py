@@ -24,7 +24,6 @@ def testar_conexao_mysql(host, database, user, password, port=3306):
         'sugestoes': []
     }
 
-    # Etapa 1: Verificar resolução DNS e conectividade com o host
     try:
         start_time = time.time()
         socket.gethostbyname(host)
@@ -43,7 +42,6 @@ def testar_conexao_mysql(host, database, user, password, port=3306):
         resultado['sugestoes'].append('Verifique o nome do host e sua conexão com a internet')
         return resultado
 
-    # Etapa 2: Tentar conexão sem especificar o banco de dados
     try:
         conn = mysql.connector.connect(
             host=host,
@@ -71,7 +69,6 @@ def testar_conexao_mysql(host, database, user, password, port=3306):
             resultado['sugestoes'].append('Confira a porta e se há firewall bloqueando')
         return resultado
 
-    # Etapa 3: Verificar se o banco de dados existe
     try:
         conn = mysql.connector.connect(
             host=host,
@@ -99,7 +96,6 @@ def testar_conexao_mysql(host, database, user, password, port=3306):
             resultado['sugestoes'].append(f'O usuário não tem permissão para acessar o banco "{database}"')
         return resultado
 
-    # Etapa 4: Verificar permissões básicas
     try:
         conn = mysql.connector.connect(
             host=host,
@@ -110,11 +106,9 @@ def testar_conexao_mysql(host, database, user, password, port=3306):
         )
         cursor = conn.cursor()
 
-        # Testar SELECT
         cursor.execute("SHOW TABLES")
         cursor.fetchall()
 
-        # Testar INSERT (usando tabela temporária)
         cursor.execute("CREATE TEMPORARY TABLE test_perm (id INT)")
         cursor.execute("INSERT INTO test_perm VALUES (1)")
         cursor.execute("DROP TEMPORARY TABLE test_perm")
@@ -134,12 +128,10 @@ def testar_conexao_mysql(host, database, user, password, port=3306):
         resultado['sugestoes'].append('O usuário não tem todas as permissões necessárias')
         return resultado
 
-    # Se chegou até aqui, todas as etapas foram bem sucedidas
     resultado['status_geral'] = 'SUCESSO'
     return resultado
 
 
-# Função para exibir os resultados de forma amigável
 def exibir_resultado_teste(resultado):
     print("\n=== RESULTADO DO TESTE DE CONEXÃO ===")
     print(f"Status Geral: {resultado['status_geral']}\n")
@@ -155,11 +147,9 @@ def exibir_resultado_teste(resultado):
             print(f"{i}. {sugestao}")
 
 
-# Exemplo de uso:
 if __name__ == "__main__":
     print("Testando conexão com o banco de dados...")
 
-    # Substitua com suas credenciais reais
     teste = testar_conexao_mysql(
         host='162.241.2.230',
         database='dougl947_DeltaGo',
