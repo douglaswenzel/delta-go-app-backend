@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 from time import time
+import mediapipe as mp
 
 MIN_SHARPNESS = 80
 MIN_EYE_SIZE_RATIO = 1.3
@@ -9,6 +10,34 @@ MIN_EYE_AREA = 900
 CAPTURE_DELAY = 1.5
 TOTAL_SAMPLES = 35
 RESIZED_DIM = (200, 200)
+
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1,
+                                   refine_landmarks=True, min_detection_confidence=0.5)
+
+
+def estimate_head_orientation(image):
+    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = face_mesh.process(rgb_image)
+
+    if not results.multi_face_landmarks:
+        return None
+
+    landmarks = results.multi_face_landmarks[0].landmark
+
+    left_eye = np.array([landmarks[33].x, landmarks[33].y])
+    right_eye = np.array([landmarks[263].x, landmarks[263].y])
+    nose_tip = np.array([landmarks[1].x, landmarks[1].y])
+    chin = np.array([landmarks[152].x, landmarks[152].y])
+
+    eye_delta_x = right_eye[0] - left_eye[0]
+    eye_delta_y = right_eye[1] - left_eye[1]
+
+    angle_yaw = np.arctan2(eye_delta_y, eye_delta_x) * 180 / np.pi
+    angle_pitch = (nose_tip[1] - chin[1]) * 100
+
+    return angle_yaw, angle_pitch
+
 
 def check_lighting(face_roi):
     avg_brightness = np.mean(face_roi)
