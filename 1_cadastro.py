@@ -28,8 +28,8 @@ def validate_eyes(eye_regions):
 
 def cadastrar_usuario(user_id):
     cap = cv2.VideoCapture(2)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
     output_dir = f'usuarios/{user_id:03d}'
     os.makedirs(output_dir, exist_ok=True)
