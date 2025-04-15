@@ -15,6 +15,17 @@ mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1,
                                    refine_landmarks=True, min_detection_confidence=0.5)
 
+def sugestao_pose(angle_yaw, angle_pitch):
+    if angle_yaw < -10:
+        return "VIRE UM POUCO À DIREITA"
+    elif angle_yaw > 10:
+        return "VIRE UM POUCO À ESQUERDA"
+    elif angle_pitch < -3:
+        return "LEVANTE LEVEMENTE O ROSTO"
+    elif angle_pitch > 3:
+        return "ABAIXE UM POUCO O ROSTO"
+    else:
+        return "MANTENHA A POSIÇÃO"
 
 def estimate_head_orientation(image):
     rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
