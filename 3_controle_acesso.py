@@ -19,6 +19,10 @@ def controle_acesso():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
+    access_granted_time = None
+    last_recognized_id = None
+    cooldown_period = 5
+
     while True:
         ret, frame = cap.read()
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
