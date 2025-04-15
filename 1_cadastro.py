@@ -3,6 +3,10 @@ import numpy as np
 import os
 from time import time
 
+MIN_SHARPNESS = 80
+MIN_EYE_SIZE_RATIO = 1.3
+MIN_EYE_AREA = 900
+
 def calculate_sharpness(image):
     return cv2.Laplacian(image, cv2.CV_64F).var()
 
@@ -17,13 +21,11 @@ def apply_adaptive_preprocessing(frame):
 def validate_eyes(eye_regions):
     if len(eye_regions) < 2: return False
 
-    eye_sizes = [w * h for (x, y, w, h) in eye_regions]
-    avg_eye_size = np.mean(eye_sizes)
+    eye_areas = [w * h for (x, y, w, h) in eye_regions]
+    if any(area < MIN_EYE_AREA for area in eye_areas): return False
 
-    size_ratio = max(eye_sizes) / min(eye_sizes)
-    if size_ratio > 1.5: return False
-
-    return True
+    size_ratio = max(eye_areas) / min(eye_areas)
+    return size_ratio <= MIN_EYE_SIZE_RATIO
 
 
 def cadastrar_usuario(user_id):
