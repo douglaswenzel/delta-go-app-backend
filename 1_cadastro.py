@@ -6,6 +6,9 @@ from time import time
 MIN_SHARPNESS = 80
 MIN_EYE_SIZE_RATIO = 1.3
 MIN_EYE_AREA = 900
+CAPTURE_DELAY = 1.5
+TOTAL_SAMPLES = 35
+RESIZED_DIM = (200, 200)
 
 def check_lighting(face_roi):
     avg_brightness = np.mean(face_roi)
@@ -23,13 +26,24 @@ def apply_adaptive_preprocessing(frame):
 
 
 def validate_eyes(eye_regions):
-    if len(eye_regions) < 2: return False
+    if len(eye_regions) < 2:
+        return False
 
     eye_areas = [w * h for (x, y, w, h) in eye_regions]
-    if any(area < MIN_EYE_AREA for area in eye_areas): return False
+    if any(area < MIN_EYE_AREA for area in eye_areas):
+        return False
 
     size_ratio = max(eye_areas) / min(eye_areas)
     return size_ratio <= MIN_EYE_SIZE_RATIO
+
+def capture_face_variations(face_roi, output_path, count, pose):
+    for angle in [-10, 0, 10]:
+        M = cv2.getRotationMatrix2D((face_roi.shape[1]/2, face_roi.shape[0]/2), angle, 1)
+        rotated = cv2.warpAffine(face_roi, M, (face_roi.shape[1], face_roi.shape[0]))
+        resized = cv2.resize(rotated, RESIZED_DIM)
+        cv2.imwrite(f'{output_path}/{count:03d}_{pose}.jpg', resized)
+        count += 1
+    return count
 
 
 def cadastrar_usuario(user_id):
