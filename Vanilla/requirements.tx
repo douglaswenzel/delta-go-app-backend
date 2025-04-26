@@ -1,0 +1,5 @@
+pymongo==4.3.3
+opencv-contrib-python==4.7.0.72
+numpy==1.24.3
+python-dotenv==1.0.0
+mediapipe
